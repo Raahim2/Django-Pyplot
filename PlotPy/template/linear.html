@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Pyplot | Linear Plot {% endblock %}
+{% block name %} Linear Plot {% endblock %} 
+{% block name2 %} Linear Plot {% endblock %} 
+
+{% block form %}
+
+   <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label  class="form-label">Title</label>
+                <input type="text" class="form-control"  name="title">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">X Input</label>
+              <input type="text" class="form-control" name="x">
+              <div  class="form-text">Ex input : 10,20,30,40</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Y Input</label>
+              <input type="text" class="form-control"  name="y">
+              <div  class="form-text">Ex input : 50,120,10,5</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">X Label</label>
+              <input type="text" class="form-control" name="x-l">
+            </div>
+
+            <div class="mb-3">
+              <label  class="form-label">Y Label</label>
+              <input type="text" class="form-control"  name="y-l">
+            </div>
+
+            <div class="mb-3">
+                <label  class="form-label">Linestyle</label><br>
+
+                <input type="radio" name="ls" value="solid">
+                <label class="form-label">Solid</label><br>
+                <input type="radio" name="ls" value="dashed">
+                <label class="form-label">Dashed</label><br>
+                <input type="radio" name="ls" value="dotted" >
+                <label class="form-label">Dotted</label><br>
+                <input type="radio" name="ls" value="dashdot" >
+                <label class="form-label">Dash-Dot</label><br>
+            </div>
+
+            <div class="mb-3">
+                <label  class="form-label">Color</label>
+                <input type="color"  name="clr">
+            </div>
+
+            <div class="mb-3">
+                <label  class="form-label">Line Width</label>
+                <input type="number" class="form-control" name="wd" min="1" max="100"  value="1">
+            </div>
+
+            <div class="mb-3">
+                <label  class="form-label">Grid</label><br>
+                <input type="radio" name="gd" value="yes">
+                <label class="form-label">Yes</label><br>
+                <input type="radio" name="gd" value="no">
+                <label class="form-label">No</label><br>
+            </div>
+
+            <div class="mb-3">
+                <label  class="form-label">Legend</label><br>
+                <input type="radio" name="lg" value="yes">
+                <label class="form-label">Yes</label><br>
+                <input type="radio" name="lg" value="no">
+                <label class="form-label">No</label><br>
+            </div>
+
+
+
+
+            <input type="submit" value="Create" id="btn" class="btn btn-primary">
+          </form>
+          
+
+{% endblock%}

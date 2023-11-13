@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Pyplot | Scatter Plot {% endblock %}
+{% block name %} Scatter Plot {% endblock %} 
+{% block name2 %} Scatter Plot {% endblock %} 
+
+{% block form %}
+
+   <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label  class="form-label">Title</label>
+                <input type="text" class="form-control"  name="title">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">X Input</label>
+              <input type="text" class="form-control" name="x">
+              <div  class="form-text">Ex input : 10,20,30,40</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Y Input</label>
+              <input type="text" class="form-control"  name="y">
+              <div  class="form-text">Ex input : 50,120,10,5</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Sizes</label>
+                <input type="text" class="form-control"  name="size" value="100">
+                <div  class="form-text">Ex input : 5,10,45,5</div>
+              </div>
+
+            <div class="mb-3">
+              <label class="form-label">X Label</label>
+              <input type="text" class="form-control" name="x-l">
+            </div>
+
+            <div class="mb-3">
+              <label  class="form-label">Y Label</label>
+              <input type="text" class="form-control"  name="y-l">
+            </div>
+
+            <div class="mb-3">
+                <label  class="form-label">Color</label>
+                <input type="color"  name="clr">
+            </div>
+            <p>OR</p>
+            <div class="mb-3">
+                <label  class="form-label">Color Map</label>
+                <select  name="cmp">
+                <option value="viridis">Viridis (Blue - Yellow)</option>
+                <option value="afmhot">Afmhot (Red - White)</option>
+                <option value="YlGnBu">YlGnBu (Blue - White)</option>
+                <option value="plasma">Plasma (Voilet - Yellow)</option>
+            </select>
+            </div>
+
+            <div class="mb-3">
+              <label  class="form-label">Markerstyle</label><br>
+              <input type="radio" name="ms" value=".">
+              <label class="form-label">Point</label><br>
+              <input type="radio" name="ms" value="^">
+              <label class="form-label">Traingle</label><br>
+              <input type="radio" name="ms" value="2" >
+              <label class="form-label">Tri</label><br>
+              <input type="radio" name="ms" value="X" >
+              <label class="form-label">X</label><br>
+              <input type="radio" name="ms" value="H" >
+              <label class="form-label">Hexagon</label><br>
+          </div>
+
+
+            <div class="mb-3">
+                <label  class="form-label">Alpha</label>
+                <input type="number" class="form-control" name="alpha" min="0" max="1" value="1" step="0.01">
+            </div>
+
+
+            <div class="mb-3">
+                <label  class="form-label">Grid</label><br>
+                <input type="radio" name="gd" value="yes">
+                <label class="form-label">Yes</label><br>
+                <input type="radio" name="gd" value="no">
+                <label class="form-label">No</label><br>
+            </div>
+
+            <div class="mb-3">
+                <label  class="form-label">Legend</label><br>
+                <input type="radio" name="lg" value="yes">
+                <label class="form-label">Yes</label><br>
+                <input type="radio" name="lg" value="no">
+                <label class="form-label">No</label><br>
+            </div>
+
+
+
+
+            <input type="submit" value="Create" id="btn" class="btn btn-primary">
+          </form>
+          
+
+{% endblock%}
