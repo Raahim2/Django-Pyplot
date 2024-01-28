@@ -390,5 +390,5 @@ def trip(request):
         canvas.print_png(response)
 
         return response
-    return render(request  , "trip.html")
+    return render(request  , "triplot.html")
     
