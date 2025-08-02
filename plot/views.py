@@ -7,13 +7,12 @@ import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import seaborn as sns  # <-- IMPORT SEABORN
+import seaborn as sns  
 import io
 import base64
 import json
 import numpy as np
 
-# (create_preview_table and other helpers remain the same)
 def create_preview_table(df):
     """
     Creates a combined HTML table with the head, a separator, and the tail.
@@ -67,7 +66,6 @@ def get_column_stats(df):
     stats[df.index.name or 'index'] = f"<b>Type:</b> Index<br><b>Entries:</b> {len(df.index)}"
     return stats
 
-# --- NEW HELPER FUNCTION FOR A BEAUTIFUL SUMMARY ---
 def generate_dataset_summary(df):
     """
     Generates a dictionary of structured data for the new UI summary component.
@@ -107,7 +105,6 @@ def generate_dataset_summary(df):
         'categorical_cols_count': len(df.select_dtypes(include=['object', 'category']).columns),
     }
     return summary
-
 
 def index(request):
     request.session.flush()
@@ -158,10 +155,7 @@ def upload_csv(request):
 
     return redirect('index')
 
-# The `load_more_rows` and `generate_plot` views remain exactly the same.
-# ... (include them here)
 def load_more_rows(request):
-    # ... same as before
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid request method'}, status=405)
     csv_data = request.session.get('csv_data')
@@ -178,24 +172,6 @@ def load_more_rows(request):
         return JsonResponse({'html': body_content, 'end_of_data': False})
     except Exception as e:
         return JsonResponse({'error': f'Failed to load rows: {e}'}, status=500)
-
-# your_app/views.py
-
-from django.shortcuts import render, redirect
-from django.http import HttpResponseBadRequest, JsonResponse
-from django.utils.html import format_html
-import pandas as pd
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import seaborn as sns  # <-- IMPORT SEABORN
-import io
-import base64
-import json
-import numpy as np
-
-# --- All other functions (index, upload_csv, helpers) remain the same ---
-# ... (create_preview_table, get_column_stats, generate_dataset_summary, index, upload_csv, load_more_rows) ...
 
 def generate_plot(request):
     """
