@@ -7,19 +7,18 @@ import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import seaborn as sns  
+import seaborn as sns
 import io
 import base64
 import json
 import numpy as np
+from vercel_blob import put  # <--- 1. IMPORT THE VERCEL BLOB 'put' FUNCTION
+
 
 def create_preview_table(df):
-    """
-    Creates a combined HTML table with the head, a separator, and the tail.
-    Now includes data-column-name attributes in the header for JS interactivity.
-    """
     if len(df) <= 11:
-        return df.to_html(classes='dataframe', border=0, justify='left', index=True)
+        # A small correction to return num_columns even for small dataframes
+        return df.to_html(classes='dataframe', border=0, justify='left', index=True), len(df.columns) + 1
     
     head = df.head(5)
     tail = df.tail(5)
@@ -44,6 +43,7 @@ def create_preview_table(df):
     return combined_html, num_columns
 
 def get_column_stats(df):
+    # ... (no changes needed here) ...
     stats = {}
     numeric_cols = df.select_dtypes(include=np.number).columns
     desc = df.describe(include='all')
@@ -67,9 +67,7 @@ def get_column_stats(df):
     return stats
 
 def generate_dataset_summary(df):
-    """
-    Generates a dictionary of structured data for the new UI summary component.
-    """
+    # ... (no changes needed here) ...
     total_rows = len(df)
     total_cols = len(df.columns)
     
@@ -111,36 +109,36 @@ def index(request):
     return render(request, "index.html")
 
 def upload_csv(request):
-    """
-    Handles CSV upload, generates rich analytics, and renders the analysis page.
-    """
     if request.method == 'POST' and request.FILES.get('csv_file'):
         csv_file = request.FILES['csv_file']
         if not csv_file.name.endswith('.csv'):
             return HttpResponseBadRequest("Invalid file type. Please upload a CSV file.")
 
         try:
-            csv_data = csv_file.read().decode('utf-8')
-            request.session['csv_data'] = csv_data
-            request.session['csv_filename'] = csv_file.name
-            
-            df = pd.read_csv(io.StringIO(csv_data))
-            request.session['total_rows'] = len(df)
+            # --- START OF CHANGES ---
+            file_content_bytes = csv_file.read() # Read the file content as bytes
 
-            # --- GENERATE NEW SUMMARY INFO ---
-            dataset_summary = generate_dataset_summary(df) # <-- USE THE NEW HELPER
+            # 2. UPLOAD to Vercel Blob and get the dictionary result
+            blob = put(csv_file.name, file_content_bytes)
+
+            # 3. STORE the small URL in the session, not the whole file
+            request.session['csv_url'] = blob['url']
+            # --- END OF CHANGES ---
+
+            # For the initial analysis, we can use the bytes we already have in memory
+            df = pd.read_csv(io.BytesIO(file_content_bytes))
+
+            # The rest of your view is the same!
+            dataset_summary = generate_dataset_summary(df)
             describe_html = df.describe(include=np.number).to_html(classes='dataframe', border=0, justify='left')
             column_stats = get_column_stats(df)
             combined_html, num_columns = create_preview_table(df)
-
             numeric_columns = df.select_dtypes(include='number').columns.tolist()
             all_columns = df.columns.tolist()
-            
+
             context = {
                 'filename': csv_file.name,
-                # New context variable for the summary card
                 'summary': dataset_summary,
-                # Existing variables
                 'describe_html': describe_html,
                 'total_rows': len(df),
                 'column_stats_json': json.dumps(column_stats),
@@ -158,12 +156,19 @@ def upload_csv(request):
 def load_more_rows(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid request method'}, status=405)
-    csv_data = request.session.get('csv_data')
-    if not csv_data:
+    
+    # --- START OF CHANGES ---
+    # 4. GET the URL from the session
+    csv_url = request.session.get('csv_url')
+    if not csv_url:
         return JsonResponse({'error': 'Session expired. Please upload file again.'}, status=404)
+    # --- END OF CHANGES ---
+
     try:
         offset = int(request.POST.get('offset', 5))
-        df = pd.read_csv(io.StringIO(csv_data))
+        # 5. READ the data directly from the URL
+        df = pd.read_csv(csv_url)
+        # The rest of the function is the same!
         more_rows_df = df.iloc[offset:offset+10]
         if more_rows_df.empty:
             return JsonResponse({'html': '', 'end_of_data': True})
@@ -174,26 +179,25 @@ def load_more_rows(request):
         return JsonResponse({'error': f'Failed to load rows: {e}'}, status=500)
 
 def generate_plot(request):
-    """
-    Generates a plot using data from the session and returns it as a Base64 image.
-    NOW WITH MORE PLOT TYPES!
-    """
     if request.method != 'POST':
         return JsonResponse({'error': 'Invalid request method'}, status=405)
 
-    csv_data = request.session.get('csv_data')
-    if not csv_data:
+    # --- START OF CHANGES ---
+    # 6. GET the URL from the session
+    csv_url = request.session.get('csv_url')
+    if not csv_url:
         return JsonResponse({'error': 'Session expired. Please upload file again.'}, status=404)
+    # --- END OF CHANGES ---
 
     try:
-        df = pd.read_csv(io.StringIO(csv_data))
+        # 7. READ the data directly from the URL
+        df = pd.read_csv(csv_url)
+        # The entire plotting logic below is the same!
         plot_type = request.POST.get('plot_type')
-        
-        # Use a consistent, professional style
         sns.set_theme(style="whitegrid")
         fig, ax = plt.subplots(figsize=(10, 6))
 
-        # --- SINGLE NUMERIC COLUMN PLOTS ---
+        # ... (no changes needed in the big if/elif block for plotting) ...
         if plot_type in ['histogram', 'boxplot', 'kde']:
             col = request.POST.get('col')
             if not col: return JsonResponse({'error': 'Column not specified.'}, status=400)
@@ -283,18 +287,16 @@ def generate_plot(request):
                 
         else:
             return JsonResponse({'error': f'Invalid or unknown plot type: {plot_type}'}, status=400)
-            
+
         fig.tight_layout()
         buf = io.BytesIO()
-        fig.savefig(buf, format='png', dpi=120) # Increase DPI for better quality
+        fig.savefig(buf, format='png', dpi=120)
         plt.close(fig)
         buf.seek(0)
-        
         image_base64 = base64.b64encode(buf.read()).decode('utf-8')
         return JsonResponse({'image_base64': image_base64})
 
     except Exception as e:
-        # Provide more specific error messages
         import traceback
         traceback.print_exc()
         if isinstance(e, KeyError):
