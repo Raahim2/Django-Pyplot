@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .dataframe { border-collapse: collapse; width: 100%; font-size: 0.875rem; border: 1px solid #e2e8f0; }
+        .dataframe td, .dataframe th { padding: 10px 14px; text-align: left; white-space: nowrap; border: none; border-bottom: 1px solid #e2e8f0; }
+        .dataframe thead th { background-color: #f8fafc; font-weight: 600; color: #475569; position: sticky; top: 0; border-bottom: 2px solid #e2e8f0; }
+        .dataframe tbody th { background-color: #f8fafc; font-weight: 600; text-align: right; color: #64748b; }
+        .dataframe tbody tr:nth-child(even) { background-color: #fdfdfe; }
+        .dataframe tbody tr:not(.separator-row):hover { background-color: #f0f9ff; }
+        .separator-row td { text-align: center; color: #94a3b8; background-color: #f8fafc; }
+        .dataframe thead th[data-column-name] { cursor: help; }
+        .plot-options { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .loader { border-top-color: #4f46e5; -webkit-animation: spinner 1.5s linear infinite; animation: spinner 1.5s linear infinite; }
+        @-webkit-keyframes spinner { 0% { -webkit-transform: rotate(0deg); } 100% { -webkit-transform: rotate(360deg); } }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .tooltip { position: absolute; display: none; background-color: #1f2937; color: #f9fafb; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; line-height: 1.4; z-index: 100; pointer-events: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); white-space: pre; }
+    </style>
+</head>
+<body class="text-slate-800">
+    <script>
+        const allColumns = JSON.parse('{{ all_columns_json|safe }}');
+        const numericColumns = JSON.parse('{{ numeric_columns_json|safe }}');
+        const columnStats = JSON.parse('{{ column_stats_json|safe }}');
+        const totalRows = parseInt('{{ total_rows }}');
+    </script>
+
+    <div>
+        <!-- Nav & Header -->
+        <nav class="bg-white/80 backdrop-blur-sm shadow-sm border-b border-slate-200 sticky top-0 z-30">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex-shrink-0"><a href="{% url 'index' %}" class="text-2xl font-bold text-indigo-600">CSV<span class="text-slate-700">Analytics</span></a></div>
+                    <a href="{% url 'index' %}" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-all duration-300 shadow-sm hover:shadow-md">Upload New File</a>
+                </div>
+            </div>
+        </nav>
+        <header class="bg-white border-b border-slate-200">
+            <div class="max-w-7xl mx-auto py-5 px-4 sm:px-6 lg:px-8">
+                <p class="text-sm text-slate-500">Analysis Dashboard</p>
+                <h1 class="text-3xl font-bold text-slate-900"> {{ filename }}</h1>
+            </div>
+        </header>
+
+        <!-- Main Content with Tabbed Interface -->
+        <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <div class="border-b border-gray-200 mb-8">
+                <nav id="tab-nav" class="-mb-px flex space-x-8" aria-label="Tabs">
+                    <button data-tab-target="#overview" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-indigo-500 text-indigo-600">Overview</button>
+                    <button data-tab-target="#preview" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">Data Preview</button>
+                    <button data-tab-target="#visualize" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">Visualize</button>
+                </nav>
+            </div>
+
+            <!-- Tab Content Panels -->
+            <div>
+                <!-- === TAB 1: OVERVIEW (RESTORED) === -->
+                <div id="overview" class="tab-content active space-y-8">
+                    <!-- Stat Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-white rounded-xl shadow p-5 flex items-center transition hover:shadow-lg hover:-translate-y-1"><div class="bg-indigo-100 rounded-full p-3 mr-4"><svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg></div><div><p class="text-sm text-slate-500">Total Rows</p><p class="text-2xl font-bold text-slate-800">{{ summary.total_rows|floatformat:"0" }}</p></div></div>
+                        <div class="bg-white rounded-xl shadow p-5 flex items-center transition hover:shadow-lg hover:-translate-y-1"><div class="bg-sky-100 rounded-full p-3 mr-4"><svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z"></path></svg></div><div><p class="text-sm text-slate-500">Total Columns</p><p class="text-2xl font-bold text-slate-800">{{ summary.total_cols }}</p></div></div>
+                        <div class="bg-white rounded-xl shadow p-5 flex items-center transition hover:shadow-lg hover:-translate-y-1"><div class="bg-rose-100 rounded-full p-3 mr-4"><svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg></div><div><p class="text-sm text-slate-500">Missing Cells</p><p class="text-2xl font-bold text-slate-800">{{ summary.total_missing_vals|floatformat:"0" }}</p></div></div>
+                        <div class="bg-white rounded-xl shadow p-5 flex items-center transition hover:shadow-lg hover:-translate-y-1"><div class="bg-emerald-100 rounded-full p-3 mr-4"><svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path></svg></div><div><p class="text-sm text-slate-500">Memory Usage</p><p class="text-2xl font-bold text-slate-800">{{ summary.memory_usage }}</p></div></div>
+                    </div>
+                    <!-- Analysis Details Grid -->
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        <div class="bg-white rounded-xl shadow"><div class="p-6 border-b border-slate-200"><h3 class="text-lg font-semibold text-slate-800">Column Details</h3></div><div class="p-6 overflow-x-auto"><table class="min-w-full text-sm"><thead class="bg-slate-50"><tr><th class="p-3 text-left font-semibold text-slate-600">Column</th><th class="p-3 text-left font-semibold text-slate-600">Type</th><th class="p-3 text-left font-semibold text-slate-600 w-1/3">Filled</th></tr></thead><tbody>{% for col in summary.column_details %}<tr class="border-b border-slate-100 last:border-0"><td class="p-3 font-medium text-slate-800">{{ col.name }}</td><td class="p-3 text-slate-600"><span class="bg-slate-100 text-slate-700 text-xs font-mono py-1 px-2 rounded-md">{{ col.dtype }}</span></td><td class="p-3"><div class="flex items-center"><div class="w-full bg-slate-200 rounded-full h-2 mr-3"><div class="h-2 rounded-full {% if col.percent_filled < 50 %}bg-rose-500{% elif col.percent_filled < 90 %}bg-amber-500{% else %}bg-emerald-500{% endif %}" style="width: {{ col.percent_filled }}%"></div></div><span class="font-medium text-slate-500 text-xs w-10 text-right">{{ col.percent_filled }}%</span></div></td></tr>{% endfor %}</tbody></table></div></div>
+                        <div class="bg-white rounded-xl shadow"><div class="p-6 border-b border-slate-200"><h3 class="text-lg font-semibold text-slate-800">Numeric Statistics</h3></div><div class="p-6 overflow-x-auto">{{ describe_html|safe }}</div></div>
+                    </div>
+                </div>
+
+                <!-- === TAB 2: DATA PREVIEW === -->
+                <div id="preview" class="tab-content">
+                     <div class="bg-white rounded-xl shadow">
+                        <div class="p-6 border-b border-slate-200"><h2 class="text-xl font-semibold text-slate-800">Dataset Preview</h2><p class="text-sm text-slate-500 mt-1">Hover over column headers for quick stats. Click below to load more rows.</p></div>
+                        <div class="p-6 overflow-x-auto">{{ combined_table_html|safe }}</div>
+                    </div>
+                </div>
+
+                <!-- === TAB 3: VISUALIZE === -->
+                <div id="visualize" class="tab-content space-y-8">
+                    <div class="bg-white rounded-xl shadow p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+                            <!-- Left: Plot Type Selection -->
+                            <div class="md:col-span-4 lg:col-span-3">
+                                <h3 class="text-lg font-semibold text-slate-800 mb-4">1. Select Plot Type</h3>
+                                <div id="plot-type-selector" class="space-y-2">
+                                    <p class="text-xs font-semibold text-slate-400 uppercase pt-2">Single Variable</p>
+                                    <button data-plot-type="histogram" data-form-id="single-numeric-options" class="plot-type-btn w-full flex items-center text-left p-3 rounded-lg border-2 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all"><svg class="w-6 h-6 mr-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path></svg><span>Histogram</span></button>
+                                    <button data-plot-type="kde" data-form-id="single-numeric-options" class="plot-type-btn w-full flex items-center text-left p-3 rounded-lg border-2 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all"><svg class="w-6 h-6 mr-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg><span>KDE Plot</span></button>
+                                    <button data-plot-type="boxplot" data-form-id="single-numeric-options" class="plot-type-btn w-full flex items-center text-left p-3 rounded-lg border-2 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all"><svg class="w-6 h-6 mr-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span>Box Plot</span></button>
+                                    <button data-plot-type="pie" data-form-id="single-categorical-options" class="plot-type-btn w-full flex items-center text-left p-3 rounded-lg border-2 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all"><svg class="w-6 h-6 mr-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg><span>Pie Chart</span></button>
+                                    <p class="text-xs font-semibold text-slate-400 uppercase pt-2">Two Variables</p>
+                                    <button data-plot-type="bar" data-form-id="cat-num-options" class="plot-type-btn w-full flex items-center text-left p-3 rounded-lg border-2 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all"><svg class="w-6 h-6 mr-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10m16-10v10M8 4v13m8-13v13M12 2v17"></path></svg><span>Bar Plot</span></button>
+                                    <button data-plot-type="violinplot" data-form-id="cat-num-options" class="plot-type-btn w-full flex items-center text-left p-3 rounded-lg border-2 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all"><svg class="w-6 h-6 mr-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span>Violin Plot</span></button>
+                                    <button data-plot-type="scatter" data-form-id="two-numeric-options" class="plot-type-btn w-full flex items-center text-left p-3 rounded-lg border-2 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all"><svg class="w-6 h-6 mr-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg><span>Scatter Plot</span></button>
+                                    <button data-plot-type="line" data-form-id="two-numeric-options" class="plot-type-btn w-full flex items-center text-left p-3 rounded-lg border-2 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all"><svg class="w-6 h-6 mr-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span>Line Plot</span></button>
+                                    <button data-plot-type="hexbin" data-form-id="two-numeric-options" class="plot-type-btn w-full flex items-center text-left p-3 rounded-lg border-2 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all"><svg class="w-6 h-6 mr-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.792v.001a1.2 1.2 0 01-1.2 1.2H12.79a.8.8 0 00-.792.8v6.417a1.2 1.2 0 01-2.078.85L3.333 16.2a1.2 1.2 0 01-.333-1.55l3.584-6.208a1.2 1.2 0 011.04-.6h6.983a1.2 1.2 0 011.04.6l3.584 6.208a1.2 1.2 0 01-.333 1.55z"></path></svg><span>Hexbin Plot</span></button>
+                                </div>
+                            </div>
+                            <!-- Right: Plot Options -->
+                            <div class="md:col-span-8 lg:col-span-9">
+                                <div class="bg-slate-50 p-6 rounded-lg min-h-full">
+                                    <div id="options-placeholder" class="h-full flex flex-col items-center justify-center text-center text-slate-500">
+                                        <svg class="w-10 h-10 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                                        <h3 class="font-semibold text-lg text-slate-600">2. Set Options</h3><p class="text-sm">Select a plot type to see its options.</p>
+                                    </div>
+                                    <div id="options-panel" class="w-full hidden">
+                                        <h3 id="options-title" class="text-lg font-semibold text-slate-800 mb-4">Plot Options</h3>
+                                        <form id="single-numeric-options" class="plot-options space-y-4"><div><label for="s-num-col" class="block text-sm font-medium text-slate-700">Column (Numeric)</label><select id="s-num-col" name="col" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></select></div><button type="submit" class="w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2.5 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Generate Plot</button></form>
+                                        <form id="single-categorical-options" class="plot-options space-y-4"><div><label for="s-cat-col" class="block text-sm font-medium text-slate-700">Column (Categorical)</label><select id="s-cat-col" name="col" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></select></div><button type="submit" class="w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2.5 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Generate Plot</button></form>
+                                        <form id="two-numeric-options" class="plot-options space-y-4"><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label for="2-num-x" class="block text-sm font-medium text-slate-700">X-axis (Numeric)</label><select id="2-num-x" name="x_col" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></select></div><div><label for="2-num-y" class="block text-sm font-medium text-slate-700">Y-axis (Numeric)</label><select id="2-num-y" name="y_col" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></select></div></div><button type="submit" class="w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2.5 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Generate Plot</button></form>
+                                        <form id="cat-num-options" class="plot-options space-y-4"><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label for="cat-num-x" class="block text-sm font-medium text-slate-700">Category (X-axis)</label><select id="cat-num-x" name="x_col" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></select></div><div><label for="cat-num-y" class="block text-sm font-medium text-slate-700">Value (Y-axis)</label><select id="cat-num-y" name="y_col" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></select></div></div><div id="bar-orientation-wrapper" class="hidden"><label for="bar_orientation" class="block text-sm font-medium text-slate-700">Orientation</label><select id="bar_orientation" name="bar_orientation" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option></select></div><button type="submit" class="w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2.5 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">Generate Plot</button></form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="plot-display-area" class="bg-white rounded-xl shadow min-h-[400px] p-6 flex items-center justify-center">
+                        <div id="plot-placeholder" class="text-center text-slate-500"><svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><h3 class="mt-2 text-sm font-medium text-slate-900">Your graph will appear here</h3><p class="mt-1 text-sm">Select a plot type and generate a graph to see it.</p></div>
+                        <div id="plot-loading" class="hidden text-center"><div class="loader ease-linear rounded-full border-8 border-t-8 border-slate-200 h-24 w-24 mx-auto"></div><p class="mt-4 text-slate-600 font-medium">Generating your masterpiece...</p></div>
+                        <img id="plot-image" src="" alt="Generated Plot" class="hidden max-w-full h-auto mx-auto rounded-lg shadow-md"/>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        const populateSelect = (elementId, options) => {
+            const select = document.getElementById(elementId);
+            if (!select) return;
+            select.innerHTML = '';
+            options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt;
+                option.textContent = opt;
+                select.appendChild(option);
+            });
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => { t.classList.remove('border-indigo-500', 'text-indigo-600'); t.classList.add('border-transparent', 'text-gray-500'); });
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    tab.classList.add('border-indigo-500', 'text-indigo-600');
+                    tab.classList.remove('border-transparent', 'text-gray-500');
+                    document.querySelector(tab.dataset.tabTarget).classList.add('active');
+                });
+            });
+
+            populateSelect('s-num-col', numericColumns);
+            populateSelect('s-cat-col', allColumns);
+            populateSelect('2-num-x', numericColumns);
+            populateSelect('2-num-y', numericColumns);
+            populateSelect('cat-num-x', allColumns);
+            populateSelect('cat-num-y', numericColumns);
+
+            const plotTypeButtons = document.querySelectorAll('.plot-type-btn');
+            const optionsPlaceholder = document.getElementById('options-placeholder');
+            const optionsPanel = document.getElementById('options-panel');
+            const optionsTitle = document.getElementById('options-title');
+            const barOrientationWrapper = document.getElementById('bar-orientation-wrapper');
+
+            plotTypeButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    plotTypeButtons.forEach(btn => btn.classList.remove('ring-2', 'ring-indigo-500', 'bg-indigo-50'));
+                    button.classList.add('ring-2', 'ring-indigo-500', 'bg-indigo-50');
+                    const selectedType = button.dataset.plotType;
+                    const formId = button.dataset.formId;
+                    const plotName = button.querySelector('span').textContent;
+                    
+                    optionsPlaceholder.style.display = 'none';
+                    optionsPanel.style.display = 'block';
+                    optionsTitle.textContent = `${plotName} Options`;
+
+                    document.querySelectorAll('.plot-options').forEach(form => form.style.display = 'none');
+                    if (formId) {
+                        const formToShow = document.getElementById(formId);
+                        formToShow.style.display = 'block';
+                        formToShow.dataset.plotType = selectedType;
+                    }
+                    barOrientationWrapper.style.display = selectedType === 'bar' ? 'block' : 'none';
+                });
+            });
+
+            document.querySelectorAll('.plot-options').forEach(form => {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const plotDisplayArea = document.getElementById('plot-display-area');
+                    const plotPlaceholder = document.getElementById('plot-placeholder');
+                    const plotImage = document.getElementById('plot-image');
+                    const plotLoading = document.getElementById('plot-loading');
+
+                    plotPlaceholder.style.display = 'none';
+                    plotImage.style.display = 'none';
+                    plotImage.src = '';
+                    plotLoading.style.display = 'block';
+                    plotDisplayArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    const formData = new FormData(form);
+                    formData.append('plot_type', form.dataset.plotType);
+
+                    try {
+                        const response = await fetch("{% url 'generate_plot' %}", {
+                            method: 'POST', headers: { 'X-CSRFToken': csrftoken }, body: formData
+                        });
+                        const data = await response.json();
+                        if (!response.ok) throw new Error(data.error || 'Plot generation failed.');
+                        plotImage.src = `data:image/png;base64,${data.image_base64}`;
+                        plotImage.style.display = 'block';
+                    } catch (error) {
+                        alert(`An error occurred: ${error.message}`);
+                        plotPlaceholder.style.display = 'block';
+                    } finally {
+                        plotLoading.style.display = 'none';
+                    }
+                });
+            });
+
+            const loadMoreBtn = document.getElementById('load-more-btn');
+            const loadMoreRow = document.getElementById('load-more-row');
+            let currentRowOffset = 5;
+            if (loadMoreBtn) {
+                if (totalRows <= 10) { if(loadMoreRow) loadMoreRow.style.display = 'none'; }
+                loadMoreBtn.addEventListener('click', async () => {
+                    loadMoreBtn.textContent = 'Loading...';
+                    loadMoreBtn.disabled = true;
+                    const formData = new FormData();
+                    formData.append('offset', currentRowOffset);
+                    try {
+                        const response = await fetch("{% url 'load_more_rows' %}", {
+                            method: 'POST', headers: { 'X-CSRFToken': csrftoken }, body: formData
+                        });
+                        const data = await response.json();
+                        if (!response.ok) throw new Error(data.error);
+                        if (data.end_of_data || !data.html) {
+                            loadMoreRow.style.display = 'none';
+                        } else {
+                            loadMoreRow.insertAdjacentHTML('beforebegin', data.html);
+                            currentRowOffset += 10;
+                            loadMoreBtn.textContent = '... Load 10 More ...';
+                            loadMoreBtn.disabled = false;
+                        }
+                    } catch(error) {
+                        loadMoreBtn.textContent = 'Error loading data. Try again.';
+                        loadMoreBtn.disabled = false;
+                        alert(`Error: ${error.message}`);
+                    }
+                });
+            }
+            
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            document.body.appendChild(tooltip);
+            const table = document.querySelector('.dataframe');
+            if (table) {
+                table.addEventListener('mouseover', e => {
+                    if (e.target.tagName === 'TH' && e.target.dataset.columnName) {
+                        const colName = e.target.dataset.columnName;
+                        if (columnStats[colName]) {
+                            tooltip.innerHTML = columnStats[colName];
+                            tooltip.style.display = 'block';
+                        }
+                    }
+                });
+                table.addEventListener('mouseout', () => { tooltip.style.display = 'none'; });
+                table.addEventListener('mousemove', e => {
+                    tooltip.style.left = e.pageX + 15 + 'px';
+                    tooltip.style.top = e.pageY + 15 + 'px';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,123 +1,116 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PyPlot</title>
-    <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/Raahim2/Django-Pyplot/main/pyplot-icon.png">
-
+    <title>CSV Analytics Uploader</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .file-input-hidden { width: 0.1px; height: 0.1px; opacity: 0; overflow: hidden; position: absolute; z-index: -1; }
+    </style>
 </head>
-<style>
-  .w-full{
-    height: 100%;
-  }
-</style>
-<body>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen">
 
-  <section class="text-gray-600 body-font">
-    <div class="container px-5 py-24 mx-auto">
-      <div class="flex flex-wrap w-full mb-20">
-        <div class="lg:w-1/2 w-full mb-6 lg:mb-0">
-          <h1 class="sm:text-3xl text-2xl font-medium title-font mb-2 text-gray-900">Select The Type of Graph</h1>
-          <div class="h-1 w-20 bg-indigo-500 rounded"></div>
-        </div>
-      </div>
-      <div class="flex flex-wrap -m-4">
-        <div class=" md:w-1/2 p-4">
-          <div class="bg-gray-100 p-6 rounded-lg">
-            
-            <h2 class="text-lg text-gray-900 font-medium title-font mb-4">Linear Plot</h2>
-            <p class="leading-relaxed text-base">A linear plot, or line plot, is a graph where data points are connected by straight lines. It's a visual representation that shows how one variable changes in relation to another, typically with the x-axis representing the independent variable and the y-axis representing the dependent variable. Linear plots are commonly used to display trends or patterns in data.
-            </p>
-            <a href="linear"><button class="flex mx-auto text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">Create</button></a>
-          </div>
-        </div>
-
-        <div class=" md:w-1/2 p-4">
-          <div class="bg-gray-100 p-6 rounded-lg">
-            <h2 class="text-lg text-gray-900 font-medium title-font mb-4">Scatter Plot</h2>
-            <p class="leading-relaxed text-base">
-              A scatter plot is a type of graph that displays individual data points on a two-dimensional plane. Each point represents the values of two variables, typically one on the x-axis and the other on the y-axis. Scatter plots are useful for visually identifying patterns, relationships, or trends in the data</p>
-          
-            <a href="scatter"><button class="flex mx-auto text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg" name="scatter">Create</button></a>
-           
-          </div>
-        </div>
-
-        <div class=" md:w-1/2 p-4">
-          <div class="bg-gray-100 p-6 rounded-lg">
-            <h2 class="text-lg text-gray-900 font-medium title-font mb-4">Bar Plot</h2>
-            <p class="leading-relaxed text-base">A bar plot, or bar chart, is a visual representation of data using rectangular bars or columns. Each bar's length or height corresponds to the quantity it represents. Bar plots are commonly used to compare and display the values of different categories or groups in a dataset, making it easy to identify trends or variations among them</p>
-            <a href="bar"><button class="flex mx-auto text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">Create</button></a>
-          </div>
-        </div>
-
-        <div class=" md:w-1/2 p-4">
-          <div class="bg-gray-100 p-6 rounded-lg">
-            <h2 class="text-lg text-gray-900 font-medium title-font mb-4">Pie Plot</h2>
-            <p class="leading-relaxed text-base">
-              A pie plot, or pie chart, is a circular statistical graphic that is divided into slices to illustrate numerical proportions. Each slice represents a proportion of the whole, and the size of each slice is proportional to the quantity it represents. Pie charts are effective for displaying the distribution of a categorical variable and are particularly useful for highlighting the relative sizes of different components within a whole.</p>
-            <a href="pie"><button class="flex mx-auto text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">Create</button></a>
-          </div>
-        </div>
-
-        <div class=" md:w-1/2 p-4">
-          <div class="bg-gray-100 p-6 rounded-lg">
-            <h2 class="text-lg text-gray-900 font-medium title-font mb-4">Histogram Plot</h2>
-            <p class="leading-relaxed text-base">
-              A histogram plot is a visual representation of the distribution of data. It uses bars to display the frequency of values within different ranges. The x-axis represents the data range, and the y-axis shows the frequency of occurrences. Histograms are useful for understanding the overall pattern and distribution of a dataset. </p>
-            <a href="histogram"><button class="flex mx-auto text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">Create</button></a>
-          </div>
-        </div>
-
-        <div class=" md:w-1/2 p-4">
-          <div class="bg-gray-100 p-6 rounded-lg">
-            <h2 class="text-lg text-gray-900 font-medium title-font mb-4">Stem Plot</h2>
-            <p class="leading-relaxed text-base">A stem plot, also known as a stem-and-leaf plot, is a visual representation of a dataset that displays individual data points. It separates each data point into a "stem" (most significant digit) and a "leaf" (least significant digit). The stems are typically listed in a vertical column, and the leaves are placed next to them, forming a histogram-like structure. Stem plots are useful for showing the distribution and range of a dataset while preserving individual data values.</p>
-            <a href="stem"><button class="flex mx-auto text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">Create</button></a>
-          </div>
-        </div>
-
-        <div class=" md:w-1/2 p-4">
-          <div class="bg-gray-100 p-6 rounded-lg">
-            <h2 class="text-lg text-gray-900 font-medium title-font mb-4">Stack Plot</h2>
-            <p class="leading-relaxed text-base">A stack plot is a graphical representation that shows the contribution of individual components to a whole over time or along a categorical axis. It consists of multiple filled areas stacked on top of each other, each representing a different category or component. Stack plots are effective for illustrating the cumulative effect of several variables and how their contributions evolve in relation to the total.</p>
-            <a href="stack"><button class="flex mx-auto text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">Create</button></a>
-          </div>
-        </div>
-
-        <div class=" md:w-1/2 p-4">
-          <div class="bg-gray-100 p-6 rounded-lg">
-            <h2 class="text-lg text-gray-900 font-medium title-font mb-4">Stair Plot</h2>
-            <p class="leading-relaxed text-base">
-              A stair plot, also known as a step plot, is a type of graph that represents discrete changes in a dataset. Instead of connecting data points with straight lines, stair plots use horizontal and vertical line segments to show the stepwise progression between consecutive data points. This type of plot is often used to emphasize the specific values at each point and is particularly useful when visualizing data that changes abruptly or at distinct intervals.</p>
-            <a href="stair"><button class="flex mx-auto text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">Create</button></a>
-          </div>
-        </div>
-
-        <div class=" md:w-1/2 p-4">
-          <div class="bg-gray-100 p-6 rounded-lg">
-            <h2 class="text-lg text-gray-900 font-medium title-font mb-4">Hex Plot</h2>
-            <p class="leading-relaxed text-base">
-              A hex plot, short for hexagonal binning plot, is a two-dimensional representation of data that divides the space into hexagonal bins. Each hexagon represents a group of data points, and the color or intensity within the hexagon indicates the density of points in that region. Hex plots are useful for visualizing the distribution and relationships between two variables, especially when dealing with large datasets, as they provide a smoothed representation of data density.</p>
-            <a href="hex"><button class="flex mx-auto text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">Create</button></a>
-          </div>
-        </div>
-
-        <div class=" md:w-1/2 p-4">
-          <div class="bg-gray-100 p-6 rounded-lg">
-            <h2 class="text-lg text-gray-900 font-medium title-font mb-4">Trip Plot</h2>
-            <p class="leading-relaxed text-base">In Trip Plot x and y are arrays of coordinates defining a triangulation. The triplot function is commonly used for plotting triangulations in a 2D space. Each pair of coordinates (x[i], y[i]) represents a point in the triangulation, and the function connects these points to create triangles.</p>
-            <a href="trip"><button class="flex mx-auto text-white bg-indigo-500 border-0 py-2 px-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">Create</button></a>
-          </div>
-        </div>
-
+    <div class="bg-white p-8 sm:p-12 rounded-2xl shadow-2xl max-w-2xl w-full mx-4">
         
-      </div>
-    </div>
-  </section>
+        <div class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-slate-800">Advanced CSV Analytics</h1>
+            <p class="text-slate-500 mt-2 text-base sm:text-lg">Upload your CSV file to unlock powerful insights.</p>
+        </div>
 
+        <!-- IMPORTANT: Form attributes updated for Django -->
+        <form id="upload-form" action="{% url 'upload_csv' %}" method="post" enctype="multipart/form-data" class="space-y-6">
+            <!-- CSRF Token is CRITICAL for security -->
+            {% csrf_token %}
+            
+            <div id="drop-zone" class="relative flex flex-col items-center justify-center w-full p-10 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-indigo-500 transition-colors duration-300 ease-in-out">
+                
+                <!-- IMPORTANT: Added 'name' attribute -->
+                <input type="file" id="file-input" name="csv_file" accept=".csv" class="file-input-hidden">
+
+                <div id="upload-prompt" class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <p class="mt-4 text-lg text-slate-600">
+                        <span class="font-semibold text-indigo-600">Click to upload</span> or drag and drop
+                    </p>
+                    <p class="mt-1 text-sm text-slate-500">CSV files only</p>
+                </div>
+
+                <div id="file-info" class="hidden text-center">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="mt-4 text-lg font-medium text-slate-700">File ready for analysis:</p>
+                    <p id="file-name" class="mt-1 text-sm text-indigo-600"></p>
+                    <button type="button" id="remove-file-btn" class="mt-4 text-sm font-semibold text-red-500 hover:text-red-700">Remove file</button>
+                </div>
+            </div>
+
+            <button type="submit" id="analyze-button" class="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-all duration-300 ease-in-out disabled:bg-slate-400 disabled:cursor-not-allowed transform hover:scale-105 disabled:transform-none">
+                Analyze Now
+            </button>
+        </form>
+    </div>
+    
+    <!-- JavaScript can remain mostly the same for UI purposes -->
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadPrompt = document.getElementById('upload-prompt');
+        const fileInfo = document.getElementById('file-info');
+        const fileNameSpan = document.getElementById('file-name');
+        const analyzeButton = document.getElementById('analyze-button');
+        const removeFileBtn = document.getElementById('remove-file-btn');
+        const uploadForm = document.getElementById('upload-form');
+
+        const handleFile = (file) => {
+            if (file && file.type === 'text/csv' || file.name.endsWith('.csv')) {
+                fileInput.files = new DataTransfer().files; // Clear previous selection
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+
+                fileNameSpan.textContent = file.name;
+                uploadPrompt.classList.add('hidden');
+                fileInfo.classList.remove('hidden');
+                analyzeButton.disabled = false;
+                dropZone.classList.add('border-green-500');
+                dropZone.classList.remove('border-slate-300', 'border-indigo-500');
+            } else {
+                alert('Please select a valid CSV file.');
+                resetUploader();
+            }
+        };
+
+        const resetUploader = () => {
+            fileInput.value = '';
+            uploadPrompt.classList.remove('hidden');
+            fileInfo.classList.add('hidden');
+            analyzeButton.disabled = true;
+            dropZone.classList.remove('border-green-500', 'border-indigo-500');
+            dropZone.classList.add('border-slate-300');
+        };
+
+        analyzeButton.disabled = true;
+        dropZone.addEventListener('click', () => { if (fileInput.value === '') fileInput.click(); });
+        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); if (fileInput.value === '') dropZone.classList.add('border-indigo-500'); });
+        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); if (fileInput.value === '') dropZone.classList.remove('border-indigo-500'); });
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('border-indigo-500'); handleFile(e.dataTransfer.files[0]); });
+        removeFileBtn.addEventListener('click', (e) => { e.stopPropagation(); resetUploader(); });
+
+        uploadForm.addEventListener('submit', () => {
+            // Show a loading state on the button when the form submits
+            analyzeButton.textContent = 'Analyzing...';
+            analyzeButton.disabled = true;
+        });
+    </script>
 </body>
 </html>
