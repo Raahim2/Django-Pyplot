@@ -4,8 +4,7 @@
   "builds": [
     {
       "src": "PlotPy/wsgi.py",
-      "use": "@vercel/python",
-      "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
+      "use": "@vercel/python"
     },
     {
       "src": "build_files.sh",
@@ -25,4 +24,6 @@
       "dest": "PlotPy/wsgi.py"
     }
   ]
+
 }
+
