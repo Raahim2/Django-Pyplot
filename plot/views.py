@@ -14,10 +14,6 @@ import json
 import numpy as np
 
 def create_preview_table(df):
-    """
-    Creates a combined HTML table with the head, a separator, and the tail.
-    Now includes data-column-name attributes in the header for JS interactivity.
-    """
     if len(df) <= 11:
         return df.to_html(classes='dataframe', border=0, justify='left', index=True)
     
