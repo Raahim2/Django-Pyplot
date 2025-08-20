@@ -4,7 +4,7 @@
   "builds": [
     {
       "src": "PlotPy/wsgi.py",
-      "use": "@vercel/python",
+      "use": "@vercel/python"
     },
     {
       "src": "build_files.sh",
@@ -26,3 +26,4 @@
   ]
 
 }
+
