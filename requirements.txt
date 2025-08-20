@@ -3,4 +3,3 @@ Django==4.2.7
 django-matplotlib==0.1
 matplotlib==3.8.2
 matplotlib-inline==0.1.6
-seaborn==0.13.2
