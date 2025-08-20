@@ -1,6 +1,6 @@
 Django==4.2.7
 matplotlib==3.8.2
-pandas
-numpy
+pandas==2.3.1
+numpy==2.3.2
 
 
