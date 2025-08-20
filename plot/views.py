@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import seaborn as sns  
+# import seaborn as sns  
 import io
 import base64
 import json
@@ -186,7 +186,6 @@ def generate_plot(request):
         plot_type = request.POST.get('plot_type')
         
         # Use a consistent, professional style
-        sns.set_theme(style="whitegrid")
         fig, ax = plt.subplots(figsize=(10, 6))
 
         # --- SINGLE NUMERIC COLUMN PLOTS ---
@@ -195,15 +194,16 @@ def generate_plot(request):
             if not col: return JsonResponse({'error': 'Column not specified.'}, status=400)
             
             if plot_type == 'histogram':
-                sns.histplot(data=df, x=col, bins=20, ax=ax, color='skyblue')
+                ax.hist(df[col].dropna(), bins=20, color='skyblue', edgecolor='black')
                 ax.set_title(f'Histogram of {col}', fontsize=16)
             
             elif plot_type == 'boxplot':
-                sns.boxplot(data=df, y=col, ax=ax, color='lightgreen')
+                ax.boxplot(df[col].dropna(), patch_artist=True, boxprops=dict(facecolor='lightgreen'))
                 ax.set_title(f'Box Plot of {col}', fontsize=16)
             
             elif plot_type == 'kde':
-                sns.kdeplot(data=df, x=col, fill=True, ax=ax, color='coral')
+                df[col].dropna().plot(kind='kde', ax=ax, color='coral', lw=2)
+                ax.fill_between(df[col].dropna(), 0, df[col].dropna().plot(kind='kde').get_lines()[0].get_ydata(), color="coral", alpha=0.3)
                 ax.set_title(f'Kernel Density Estimate of {col}', fontsize=16)
 
         # --- SINGLE CATEGORICAL COLUMN PLOTS ---
@@ -220,8 +220,17 @@ def generate_plot(request):
                 if other_sum > 0:
                     top_9['Other'] = other_sum
                 data_to_plot = top_9
+            
+            colors = plt.cm.Pastel1.colors  
 
-            ax.pie(data_to_plot, labels=data_to_plot.index, autopct='%1.1f%%', startangle=90, colors=sns.color_palette("pastel"))
+            # ax.pie(data_to_plot, labels=data_to_plot.index, autopct='%1.1f%%', startangle=90, colors=sns.color_palette("pastel"))
+            ax.pie(
+                data_to_plot,
+                labels=data_to_plot.index,
+                autopct='%1.1f%%',
+                startangle=90,
+                colors=colors
+            )
             ax.set_title(f'Pie Chart for {col}', fontsize=16)
             ax.axis('equal')
 
@@ -231,11 +240,11 @@ def generate_plot(request):
             if not x_col or not y_col: return JsonResponse({'error': 'X and Y columns not specified.'}, status=400)
 
             if plot_type == 'line':
-                sns.lineplot(data=df, x=x_col, y=y_col, marker='o', ax=ax, color='teal')
+                ax.plot(df[x_col], df[y_col], marker='o', color='teal')
                 ax.set_title(f'Line Plot of {y_col} vs {x_col}', fontsize=16)
             
             elif plot_type == 'scatter':
-                sns.scatterplot(data=df, x=x_col, y=y_col, alpha=0.6, ax=ax, color='tomato')
+                ax.scatter(df[x_col], df[y_col], alpha=0.6, color='tomato')
                 ax.set_title(f'Scatter Plot of {y_col} vs {x_col}', fontsize=16)
 
             elif plot_type == 'hexbin':
@@ -264,18 +273,46 @@ def generate_plot(request):
             if plot_type == 'bar':
                 orientation = request.POST.get('bar_orientation', 'vertical')
                 if orientation == 'vertical':
-                    sns.barplot(data=df, x=x_col, y=y_col, ax=ax, palette='viridis')
-                    ax.set_xlabel(x_col, fontsize=12); ax.set_ylabel(y_col, fontsize=12)
+                    ax.bar(df[x_col], df[y_col], color='teal')
+                    ax.set_xlabel(x_col)
+                    ax.set_ylabel(y_col)
                     plt.xticks(rotation=45, ha='right')
                 else: # Horizontal
-                    sns.barplot(data=df, x=y_col, y=x_col, ax=ax, palette='viridis', orient='h')
-                    ax.set_xlabel(y_col, fontsize=12); ax.set_ylabel(x_col, fontsize=12)
+                    ax.barh(df[x_col], df[y_col], color='teal')
+                    ax.set_xlabel(y_col)
+                    ax.set_ylabel(x_col)
+
                 ax.set_title(f'Bar Plot of {y_col} by {x_col}', fontsize=16)
 
             elif plot_type == 'violinplot':
-                sns.violinplot(data=df, x=x_col, y=y_col, ax=ax, palette='muted')
+                x_col, y_col = request.POST.get('x_col'), request.POST.get('y_col')
+                if not x_col or not y_col:
+                    return JsonResponse({'error': 'Categorical and Numeric columns not specified.'}, status=400)
+
+                # group numeric values by category
+                groups = [df[y_col][df[x_col] == cat].dropna() for cat in df[x_col].unique()]
+
+                parts = ax.violinplot(
+                    groups,
+                    showmeans=True,      # ✅ show mean line
+                    showmedians=False,   # ✅ hide median line
+                    showextrema=True     # ✅ min/max lines
+                )
+
+                # 🎨 style the violins (since no seaborn palette)
+                for pc in parts['bodies']:
+                    pc.set_facecolor("lightblue")
+                    pc.set_edgecolor("black")
+                    pc.set_alpha(0.7)
+
+                # set category labels on X-axis
+                ax.set_xticks(range(1, len(df[x_col].unique()) + 1))
+                ax.set_xticklabels(df[x_col].unique(), rotation=45, ha='right')
+
+                ax.set_xlabel(x_col, fontsize=12)
+                ax.set_ylabel(y_col, fontsize=12)
                 ax.set_title(f'Violin Plot of {y_col} by {x_col}', fontsize=16)
-                plt.xticks(rotation=45, ha='right')
+
                 
         else:
             return JsonResponse({'error': f'Invalid or unknown plot type: {plot_type}'}, status=400)
